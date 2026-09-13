@@ -1,0 +1,187 @@
+import { Theme } from "../theme.slint";
+import { AppItem } from "../models.slint";
+import { ScorePill } from "score_pill.slint";
+import { StatusBadge } from "badge.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component KanbanCard inherits Rectangle {
+    in property <AppItem> app;
+    in property <bool> is-selected: false;
+    callback clicked();
+
+    background: root.is-selected ? Theme.surface-selected : (card-touch.has-hover ? Theme.surface-hover : Theme.surface);
+    border-color: root.is-selected ? Theme.accent : Theme.border;
+    border-width: 1px;
+    border-radius: 8px;
+    padding: 10px;
+
+    card-touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    VerticalLayout {
+        spacing: 6px;
+
+        HorizontalLayout {
+            alignment: space-between;
+            Text {
+                text: root.app.company;
+                color: Theme.text-primary;
+                font-size: 13px;
+                font-weight: 700;
+                overflow: elide;
+            }
+            ScorePill {
+                score: root.app.score;
+                score-str: root.app.score-str;
+            }
+        }
+
+        Text {
+            text: root.app.role;
+            color: Theme.text-secondary;
+            font-size: 11px;
+            font-weight: 500;
+            overflow: elide;
+        }
+
+        HorizontalLayout {
+            alignment: space-between;
+            if root.app.pay-range != "": Text {
+                text: root.app.pay-range;
+                color: Theme.green;
+                font-size: 10px;
+                font-weight: 600;
+                overflow: elide;
+            }
+            if root.app.location != "": Text {
+                text: root.app.location;
+                color: Theme.teal;
+                font-size: 10px;
+                overflow: elide;
+            }
+        }
+    }
+}
+
+export component KanbanColumn inherits Rectangle {
+    in property <string> title: "Column";
+    in property <color> accent: Theme.blue;
+    in property <[AppItem]> apps: [];
+    in property <int> selected-id: -1;
+    callback select-app(int);
+
+    background: Theme.mantle;
+    border-color: Theme.border;
+    border-width: 1px;
+    border-radius: 8px;
+    padding: 8px;
+
+    VerticalLayout {
+        spacing: 8px;
+
+        // Column Header
+        HorizontalLayout {
+            alignment: space-between;
+            height: 24px;
+            HorizontalLayout {
+                spacing: 6px;
+                Rectangle {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 4px;
+                    background: root.accent;
+                    y: 8px;
+                }
+                Text {
+                    text: root.title;
+                    color: Theme.text-primary;
+                    font-size: 12px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+            }
+            Rectangle {
+                background: Theme.surface;
+                border-radius: 10px;
+                padding-left: 6px;
+                padding-right: 6px;
+                height: 18px;
+                Text {
+                    text: root.apps.length;
+                    color: Theme.text-secondary;
+                    font-size: 10px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // Column Cards
+        ScrollView {
+            VerticalLayout {
+                spacing: 6px;
+                padding-bottom: 8px;
+                for item in root.apps: KanbanCard {
+                    app: item;
+                    is-selected: item.id == root.selected-id;
+                    clicked => { root.select-app(item.id); }
+                }
+            }
+        }
+    }
+}
+
+export component KanbanView inherits Rectangle {
+    in property <[AppItem]> col-evaluated: [];
+    in property <[AppItem]> col-applied: [];
+    in property <[AppItem]> col-interview: [];
+    in property <[AppItem]> col-offer: [];
+    in property <[AppItem]> col-rejected: [];
+    in property <int> selected-id: -1;
+
+    callback select-app(int);
+
+    background: Theme.background;
+
+    HorizontalLayout {
+        spacing: 10px;
+        padding: 4px;
+
+        KanbanColumn {
+            title: "Evaluated / Inbox";
+            accent: Theme.peach;
+            apps: root.col-evaluated;
+            selected-id: root.selected-id;
+            select-app(id) => { root.select-app(id); }
+        }
+        KanbanColumn {
+            title: "Applied";
+            accent: Theme.blue;
+            apps: root.col-applied;
+            selected-id: root.selected-id;
+            select-app(id) => { root.select-app(id); }
+        }
+        KanbanColumn {
+            title: "Interview";
+            accent: Theme.mauve;
+            apps: root.col-interview;
+            selected-id: root.selected-id;
+            select-app(id) => { root.select-app(id); }
+        }
+        KanbanColumn {
+            title: "Offer / Hired";
+            accent: Theme.green;
+            apps: root.col-offer;
+            selected-id: root.selected-id;
+            select-app(id) => { root.select-app(id); }
+        }
+        KanbanColumn {
+            title: "Discarded / Rejected";
+            accent: Theme.gray;
+            apps: root.col-rejected;
+            selected-id: root.selected-id;
+            select-app(id) => { root.select-app(id); }
+        }
+    }
+}

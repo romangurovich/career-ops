@@ -1,0 +1,49 @@
+import { Theme } from "../theme.slint";
+
+export component ScorePill inherits Rectangle {
+    in property <float> score: 0.0;
+    in property <string> score-str: "";
+
+    pure function get-color(sc: float) -> color {
+        if (sc >= 4.5) {
+            return Theme.green;
+        } else if (sc >= 4.0) {
+            return Theme.teal;
+        } else if (sc >= 3.5) {
+            return Theme.peach;
+        } else if (sc > 0.0) {
+            return Theme.red;
+        }
+        return Theme.text-muted;
+    }
+
+    pure function display-text(sc: float, raw: string) -> string {
+        if (raw != "") {
+            return raw;
+        }
+        if (sc > 0.0) {
+            return sc + " ★";
+        }
+        return "—";
+    }
+
+    background: get-color(root.score).with-alpha(0.15);
+    border-color: get-color(root.score).with-alpha(0.35);
+    border-width: 1px;
+    border-radius: 6px;
+    height: 22px;
+    padding-left: 6px;
+    padding-right: 6px;
+
+    HorizontalLayout {
+        alignment: center;
+        spacing: 2px;
+        Text {
+            text: display-text(root.score, root.score-str);
+            color: get-color(root.score);
+            font-size: 11px;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+    }
+}

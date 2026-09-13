@@ -1,0 +1,150 @@
+import { Theme } from "../theme.slint";
+import { AppItem } from "../models.slint";
+import { StatusBadge } from "badge.slint";
+import { ScorePill } from "score_pill.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component TableView inherits Rectangle {
+    in property <[AppItem]> apps: [];
+    in property <int> selected-id: -1;
+    callback select-app(int);
+
+    background: Theme.background;
+
+    VerticalLayout {
+        // Table Header
+        Rectangle {
+            background: Theme.mantle;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 6px;
+            height: 32px;
+            padding-left: 12px;
+            padding-right: 12px;
+
+            HorizontalLayout {
+                spacing: 8px;
+                Text { text: "#"; color: Theme.text-muted; font-size: 11px; font-weight: 700; width: 40px; vertical-alignment: center; }
+                Text { text: "Company"; color: Theme.text-muted; font-size: 11px; font-weight: 700; width: 140px; vertical-alignment: center; }
+                Text { text: "Role"; color: Theme.text-muted; font-size: 11px; font-weight: 700; horizontal-stretch: 1; vertical-alignment: center; }
+                Text { text: "Score"; color: Theme.text-muted; font-size: 11px; font-weight: 700; width: 60px; horizontal-alignment: center; vertical-alignment: center; }
+                Text { text: "Status"; color: Theme.text-muted; font-size: 11px; font-weight: 700; width: 95px; horizontal-alignment: center; vertical-alignment: center; }
+                Text { text: "Location / Mode"; color: Theme.text-muted; font-size: 11px; font-weight: 700; width: 130px; vertical-alignment: center; }
+                Text { text: "Comp"; color: Theme.text-muted; font-size: 11px; font-weight: 700; width: 90px; vertical-alignment: center; }
+                Text { text: "Date"; color: Theme.text-muted; font-size: 11px; font-weight: 700; width: 75px; vertical-alignment: center; }
+            }
+        }
+
+        // Table Rows in ScrollView
+        ScrollView {
+            VerticalLayout {
+                spacing: 2px;
+                padding-top: 4px;
+                padding-bottom: 8px;
+
+                for item in root.apps: Rectangle {
+                    property <bool> is-selected: item.id == root.selected-id;
+                    background: is-selected ? Theme.surface-selected : (row-touch.has-hover ? Theme.surface-hover : Theme.surface);
+                    border-color: is-selected ? Theme.accent : Theme.border;
+                    border-width: 1px;
+                    border-radius: 6px;
+                    height: 38px;
+                    padding-left: 12px;
+                    padding-right: 12px;
+
+                    row-touch := TouchArea {
+                        clicked => { root.select-app(item.id); }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+
+                        // #
+                        Text {
+                            text: item.id;
+                            color: Theme.text-muted;
+                            font-size: 11px;
+                            font-weight: 600;
+                            width: 40px;
+                            vertical-alignment: center;
+                        }
+
+                        // Company
+                        Text {
+                            text: item.company;
+                            color: Theme.text-primary;
+                            font-size: 12px;
+                            font-weight: 700;
+                            width: 140px;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+
+                        // Role
+                        Text {
+                            text: item.role;
+                            color: Theme.text-secondary;
+                            font-size: 12px;
+                            font-weight: 500;
+                            horizontal-stretch: 1;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+
+                        // Score
+                        HorizontalLayout {
+                            width: 60px;
+                            alignment: center;
+                            ScorePill {
+                                score: item.score;
+                                score-str: item.score-str;
+                            }
+                        }
+
+                        // Status
+                        HorizontalLayout {
+                            width: 95px;
+                            alignment: center;
+                            StatusBadge {
+                                status: item.status;
+                            }
+                        }
+
+                        // Location & Work Mode
+                        HorizontalLayout {
+                            width: 130px;
+                            spacing: 4px;
+                            Text {
+                                text: item.location != "" ? item.location : (item.work-mode != "" ? item.work-mode : "—");
+                                color: Theme.teal;
+                                font-size: 11px;
+                                overflow: elide;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Pay
+                        Text {
+                            text: item.pay-range != "" ? item.pay-range : "—";
+                            color: item.pay-range != "" ? Theme.green : Theme.text-muted;
+                            font-size: 11px;
+                            font-weight: 600;
+                            width: 90px;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+
+                        // Date
+                        Text {
+                            text: item.date;
+                            color: Theme.text-muted;
+                            font-size: 11px;
+                            width: 75px;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

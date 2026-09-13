@@ -1,0 +1,246 @@
+import { Theme } from "../theme.slint";
+import { LineEdit } from "std-widgets.slint";
+
+export component AddCompanyDialog inherits Rectangle {
+    callback cancel();
+    callback submit(string, string, string, string, string, string, string);
+
+    property <string> selected-status: "Applied";
+
+    // Dim background
+    background: #000000.with-alpha(0.65);
+
+    // Modal Card
+    Rectangle {
+        width: 480px;
+        background: Theme.surface;
+        border-color: Theme.border-active;
+        border-width: 1px;
+        border-radius: 12px;
+        padding: 20px;
+
+        VerticalLayout {
+            spacing: 14px;
+
+            // Modal Header
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: "➕ Add Company & Application";
+                    color: Theme.text-primary;
+                    font-size: 16px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+                Rectangle {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 12px;
+                    background: close-touch.has-hover ? Theme.surface-hover : transparent;
+                    close-touch := TouchArea { clicked => { root.cancel(); } }
+                    Text {
+                        text: "✕";
+                        color: Theme.text-muted;
+                        font-size: 12px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            Rectangle {
+                background: Theme.border;
+                height: 1px;
+            }
+
+            // Company Name
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "Company Name *"; color: Theme.text-secondary; font-size: 11px; font-weight: 600; }
+                inp-company := LineEdit {
+                    placeholder-text: "e.g. Anthropic, Linear, OpenAI";
+                }
+            }
+
+            // Role Title
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "Role Title *"; color: Theme.text-secondary; font-size: 11px; font-weight: 600; }
+                inp-role := LineEdit {
+                    placeholder-text: "e.g. Staff AI Engineer, Solutions Architect";
+                }
+            }
+
+            // Job URL
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "Job Posting URL"; color: Theme.text-secondary; font-size: 11px; font-weight: 600; }
+                inp-url := LineEdit {
+                    placeholder-text: "https://...";
+                }
+            }
+
+            // Two-column row: Location & Compensation
+            HorizontalLayout {
+                spacing: 12px;
+                VerticalLayout {
+                    spacing: 4px;
+                    horizontal-stretch: 1;
+                    Text { text: "Location / Work Mode"; color: Theme.text-secondary; font-size: 11px; font-weight: 600; }
+                    inp-loc := LineEdit {
+                        placeholder-text: "e.g. Remote US, San Francisco, CA";
+                    }
+                }
+                VerticalLayout {
+                    spacing: 4px;
+                    horizontal-stretch: 1;
+                    Text { text: "Compensation"; color: Theme.text-secondary; font-size: 11px; font-weight: 600; }
+                    inp-pay := LineEdit {
+                        placeholder-text: "e.g. $220-280K (POSTED)";
+                    }
+                }
+            }
+
+            // Status Selector Pills
+            VerticalLayout {
+                spacing: 6px;
+                Text { text: "Lifecycle Status"; color: Theme.text-secondary; font-size: 11px; font-weight: 600; }
+                HorizontalLayout {
+                    spacing: 6px;
+
+                    Rectangle {
+                        background: root.selected-status == "Applied" ? Theme.blue : Theme.surface-hover;
+                        border-radius: 6px;
+                        height: 26px;
+                        horizontal-stretch: 1;
+                        TouchArea { clicked => { root.selected-status = "Applied"; } }
+                        Text {
+                            text: "Applied";
+                            color: root.selected-status == "Applied" ? Theme.crust : Theme.text-primary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        background: root.selected-status == "Interview" ? Theme.mauve : Theme.surface-hover;
+                        border-radius: 6px;
+                        height: 26px;
+                        horizontal-stretch: 1;
+                        TouchArea { clicked => { root.selected-status = "Interview"; } }
+                        Text {
+                            text: "Interview";
+                            color: root.selected-status == "Interview" ? Theme.crust : Theme.text-primary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        background: root.selected-status == "Offer" ? Theme.green : Theme.surface-hover;
+                        border-radius: 6px;
+                        height: 26px;
+                        horizontal-stretch: 1;
+                        TouchArea { clicked => { root.selected-status = "Offer"; } }
+                        Text {
+                            text: "Offer";
+                            color: root.selected-status == "Offer" ? Theme.crust : Theme.text-primary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        background: root.selected-status == "Evaluated" ? Theme.peach : Theme.surface-hover;
+                        border-radius: 6px;
+                        height: 26px;
+                        horizontal-stretch: 1;
+                        TouchArea { clicked => { root.selected-status = "Evaluated"; } }
+                        Text {
+                            text: "Inbox";
+                            color: root.selected-status == "Evaluated" ? Theme.crust : Theme.text-primary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // Notes
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "Additional Notes"; color: Theme.text-secondary; font-size: 11px; font-weight: 600; }
+                inp-notes := LineEdit {
+                    placeholder-text: "Optional referral notes, tech stack details...";
+                }
+            }
+
+            Rectangle {
+                background: Theme.border;
+                height: 1px;
+            }
+
+            // Modal Actions (Cancel & Submit)
+            HorizontalLayout {
+                alignment: end;
+                spacing: 10px;
+
+                Rectangle {
+                    background: btn-can.has-hover ? Theme.surface-hover : transparent;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    border-radius: 6px;
+                    width: 90px;
+                    height: 32px;
+                    btn-can := TouchArea { clicked => { root.cancel(); } }
+                    Text {
+                        text: "Cancel";
+                        color: Theme.text-secondary;
+                        font-size: 12px;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                Rectangle {
+                    background: btn-sub.has-hover ? Theme.accent-hover : Theme.accent;
+                    border-radius: 6px;
+                    width: 130px;
+                    height: 32px;
+                    btn-sub := TouchArea {
+                        clicked => {
+                            if (inp-company.text != "" && inp-role.text != "") {
+                                root.submit(
+                                    inp-company.text,
+                                    inp-role.text,
+                                    inp-url.text,
+                                    root.selected-status,
+                                    inp-loc.text,
+                                    inp-pay.text,
+                                    inp-notes.text,
+                                );
+                            }
+                        }
+                    }
+                    Text {
+                        text: "✓ Add Company";
+                        color: Theme.crust;
+                        font-size: 12px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

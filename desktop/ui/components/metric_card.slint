@@ -1,0 +1,30 @@
+import { Theme } from "../theme.slint";
+
+export component MetricCard inherits Rectangle {
+    in property <string> title: "Applications";
+    in property <string> value: "0";
+    in property <color> accent-color: Theme.blue;
+
+    background: Theme.surface;
+    border-color: Theme.border;
+    border-width: 1px;
+    border-radius: 8px;
+    padding: 10px;
+
+    VerticalLayout {
+        alignment: space-between;
+        spacing: 2px;
+        Text {
+            text: root.title;
+            color: Theme.text-secondary;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        Text {
+            text: root.value;
+            color: root.accent-color;
+            font-size: 18px;
+            font-weight: 700;
+        }
+    }
+}

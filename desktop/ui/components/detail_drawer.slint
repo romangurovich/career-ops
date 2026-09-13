@@ -1,0 +1,248 @@
+import { Theme } from "../theme.slint";
+import { AppItem } from "../models.slint";
+import { StatusBadge } from "badge.slint";
+import { ScorePill } from "score_pill.slint";
+
+export component DetailDrawer inherits Rectangle {
+    in property <AppItem> app;
+    in property <bool> has-selection: false;
+
+    callback open-url(string);
+    callback open-pdf(string);
+    callback regenerate-pdf(string);
+    callback change-status(int, string);
+
+    background: Theme.surface;
+    border-color: Theme.border;
+    border-width: 1px;
+    border-radius: 8px;
+    padding: 16px;
+
+    if !root.has-selection: VerticalLayout {
+        alignment: center;
+        Text {
+            text: "Select an application to view details";
+            color: Theme.text-muted;
+            font-size: 13px;
+            horizontal-alignment: center;
+        }
+    }
+
+    if root.has-selection: VerticalLayout {
+        alignment: space-between;
+        spacing: 12px;
+
+        // Header
+        VerticalLayout {
+            spacing: 4px;
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: root.app.company;
+                    color: Theme.text-primary;
+                    font-size: 18px;
+                    font-weight: 700;
+                    overflow: elide;
+                }
+                ScorePill {
+                    score: root.app.score;
+                    score-str: root.app.score-str;
+                }
+            }
+
+            Text {
+                text: root.app.role;
+                color: Theme.text-secondary;
+                font-size: 13px;
+                font-weight: 500;
+                overflow: elide;
+            }
+
+            HorizontalLayout {
+                spacing: 8px;
+                StatusBadge {
+                    status: root.app.status;
+                }
+                if root.app.archetype != "": Rectangle {
+                    background: Theme.surface-selected;
+                    border-radius: 4px;
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    height: 22px;
+                    Text {
+                        text: root.app.archetype;
+                        color: Theme.mauve;
+                        font-size: 11px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            background: Theme.border;
+            height: 1px;
+        }
+
+        // Metadata grid
+        VerticalLayout {
+            spacing: 8px;
+
+            if root.app.location != "": HorizontalLayout {
+                spacing: 8px;
+                Text { text: "Location:"; color: Theme.text-muted; font-size: 11px; width: 70px; }
+                Text { text: root.app.location; color: Theme.text-primary; font-size: 11px; font-weight: 500; }
+            }
+
+            if root.app.work-mode != "": HorizontalLayout {
+                spacing: 8px;
+                Text { text: "Work Mode:"; color: Theme.text-muted; font-size: 11px; width: 70px; }
+                Text { text: root.app.work-mode; color: Theme.teal; font-size: 11px; font-weight: 500; }
+            }
+
+            if root.app.pay-range != "": HorizontalLayout {
+                spacing: 8px;
+                Text { text: "Comp:"; color: Theme.text-muted; font-size: 11px; width: 70px; }
+                Text { text: root.app.pay-range; color: Theme.green; font-size: 11px; font-weight: 600; }
+            }
+
+            if root.app.date != "": HorizontalLayout {
+                spacing: 8px;
+                Text { text: "Applied:"; color: Theme.text-muted; font-size: 11px; width: 70px; }
+                Text { text: root.app.date; color: Theme.text-secondary; font-size: 11px; }
+            }
+
+            if root.app.last-contact != "": HorizontalLayout {
+                spacing: 8px;
+                Text { text: "Last Contact:"; color: Theme.text-muted; font-size: 11px; width: 70px; }
+                Text { text: root.app.last-contact; color: Theme.text-secondary; font-size: 11px; }
+            }
+        }
+
+        // TL;DR / Summary box
+        if root.app.tldr != "": VerticalLayout {
+            spacing: 4px;
+            Text {
+                text: "TL;DR Summary";
+                color: Theme.text-secondary;
+                font-size: 11px;
+                font-weight: 600;
+            }
+            Rectangle {
+                background: Theme.surface-hover;
+                border-radius: 6px;
+                padding: 8px;
+                Text {
+                    text: root.app.tldr;
+                    color: Theme.text-primary;
+                    font-size: 11px;
+                    wrap: word-wrap;
+                }
+            }
+        }
+
+        // Notes box
+        if root.app.notes != "": VerticalLayout {
+            spacing: 4px;
+            Text {
+                text: "Notes";
+                color: Theme.text-secondary;
+                font-size: 11px;
+                font-weight: 600;
+            }
+            Rectangle {
+                background: Theme.surface-hover;
+                border-radius: 6px;
+                padding: 8px;
+                Text {
+                    text: root.app.notes;
+                    color: Theme.text-secondary;
+                    font-size: 11px;
+                    wrap: word-wrap;
+                }
+            }
+        }
+
+        // Action Buttons
+        VerticalLayout {
+            spacing: 8px;
+
+            if root.app.job-url != "": Rectangle {
+                background: btn-url.has-hover ? Theme.accent-hover : Theme.accent;
+                border-radius: 6px;
+                height: 30px;
+                btn-url := TouchArea {
+                    clicked => { root.open-url(root.app.job-url); }
+                }
+                Text {
+                    text: "🔗 Open Job Posting in Browser";
+                    color: Theme.crust;
+                    font-size: 11px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                }
+            }
+
+            if root.app.has-pdf: Rectangle {
+                background: btn-pdf.has-hover ? Theme.surface-selected : Theme.surface-hover;
+                border-color: Theme.border-active;
+                border-width: 1px;
+                border-radius: 6px;
+                height: 30px;
+                btn-pdf := TouchArea {
+                    clicked => { root.open-pdf(root.app.report-number); }
+                }
+                Text {
+                    text: "📄 Open Tailored CV PDF";
+                    color: Theme.text-primary;
+                    font-size: 11px;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                }
+            }
+
+            // Quick Status Buttons
+            Text {
+                text: "Update Status:";
+                color: Theme.text-muted;
+                font-size: 11px;
+                font-weight: 600;
+            }
+
+            HorizontalLayout {
+                spacing: 4px;
+                Rectangle {
+                    background: btn-st-app.has-hover ? Theme.blue.with-alpha(0.3) : Theme.surface-hover;
+                    border-radius: 4px;
+                    height: 24px;
+                    btn-st-app := TouchArea { clicked => { root.change-status(root.app.id, "Applied"); } }
+                    Text { text: "Applied"; color: Theme.blue; font-size: 10px; font-weight: 600; vertical-alignment: center; horizontal-alignment: center; }
+                }
+                Rectangle {
+                    background: btn-st-int.has-hover ? Theme.mauve.with-alpha(0.3) : Theme.surface-hover;
+                    border-radius: 4px;
+                    height: 24px;
+                    btn-st-int := TouchArea { clicked => { root.change-status(root.app.id, "Interview"); } }
+                    Text { text: "Interview"; color: Theme.mauve; font-size: 10px; font-weight: 600; vertical-alignment: center; horizontal-alignment: center; }
+                }
+                Rectangle {
+                    background: btn-st-off.has-hover ? Theme.green.with-alpha(0.3) : Theme.surface-hover;
+                    border-radius: 4px;
+                    height: 24px;
+                    btn-st-off := TouchArea { clicked => { root.change-status(root.app.id, "Offer"); } }
+                    Text { text: "Offer"; color: Theme.green; font-size: 10px; font-weight: 600; vertical-alignment: center; horizontal-alignment: center; }
+                }
+                Rectangle {
+                    background: btn-st-dis.has-hover ? Theme.gray.with-alpha(0.3) : Theme.surface-hover;
+                    border-radius: 4px;
+                    height: 24px;
+                    btn-st-dis := TouchArea { clicked => { root.change-status(root.app.id, "Discarded"); } }
+                    Text { text: "Discard"; color: Theme.text-muted; font-size: 10px; font-weight: 600; vertical-alignment: center; horizontal-alignment: center; }
+                }
+            }
+        }
+    }
+}

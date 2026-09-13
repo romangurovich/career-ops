@@ -1,0 +1,340 @@
+import { Theme } from "theme.slint";
+import { AppItem, MetricStats, PipelineJobItem, SurveyQuestionItem } from "models.slint";
+import { TabBar } from "components/tab_bar.slint";
+import { TableView } from "components/table_view.slint";
+import { KanbanView } from "components/kanban_view.slint";
+import { DetailDrawer } from "components/detail_drawer.slint";
+import { MetricCard } from "components/metric_card.slint";
+import { AddCompanyDialog } from "components/add_dialog.slint";
+import { PipelineView } from "components/pipeline_view.slint";
+import { LineEdit, Button } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    title: "Career-Ops Desktop";
+    preferred-width: 1300px;
+    preferred-height: 820px;
+    min-width: 900px;
+    min-height: 600px;
+    background: Theme.background;
+
+    in property <[AppItem]> apps: [];
+    in property <[AppItem]> col-evaluated: [];
+    in property <[AppItem]> col-applied: [];
+    in property <[AppItem]> col-interview: [];
+    in property <[AppItem]> col-offer: [];
+    in property <[AppItem]> col-rejected: [];
+
+    in property <MetricStats> stats: {
+        total: 0,
+        evaluated: 0,
+        applied: 0,
+        interview: 0,
+        responded: 0,
+        offer: 0,
+        hired: 0,
+        discarded: 0,
+        rejected: 0,
+        avg-score: "0.0",
+        top-score: "0.0",
+    };
+
+    in property <AppItem> selected-app;
+    in property <bool> has-selection: false;
+    in property <int> selected-id: -1;
+    in property <string> current-tab: "all";
+    in property <string> view-mode: "table"; // "table" | "kanban" | "pipeline"
+    property <bool> show-add-dialog: false;
+
+    // Pipeline & Survey Properties
+    in property <[PipelineJobItem]> pipeline-jobs: [];
+    in property <PipelineJobItem> selected-pipeline-job;
+    in property <bool> has-selected-pipeline-job: false;
+    in property <int> selected-pipeline-job-id: -1;
+    in property <[SurveyQuestionItem]> survey-questions: [];
+    in property <string> survey-status-message: "";
+    in property <int> inventory-skills-count: 0;
+    in property <int> inventory-highlights-count: 0;
+
+    callback tab-changed(string);
+    callback search-changed(string);
+    callback refresh-data();
+    callback select-app(int);
+    callback view-mode-changed(string);
+
+    callback open-url(string);
+    callback open-pdf(string);
+    callback regenerate-pdf(string);
+    callback change-status(int, string);
+    callback add-company(string, string, string, string, string, string, string);
+
+    // Pipeline & Survey Callbacks
+    callback select-pipeline-job(int);
+    callback survey-answer-changed(int, string);
+    callback save-survey(int);
+    callback merge-survey-to-cv();
+
+    VerticalLayout {
+        padding: 14px;
+        spacing: 12px;
+
+        // Top Navigation Bar & KPI Cards
+        HorizontalLayout {
+            height: 52px;
+            spacing: 12px;
+
+            // Brand & Logo
+            Rectangle {
+                background: Theme.mantle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 8px;
+                padding-left: 14px;
+                padding-right: 14px;
+                width: 220px;
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    Text {
+                        text: "⚡";
+                        font-size: 16px;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: "Career-Ops Desktop";
+                        color: Theme.text-primary;
+                        font-size: 14px;
+                        font-weight: 800;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Search Bar
+            Rectangle {
+                background: Theme.mantle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 8px;
+                horizontal-stretch: 1;
+                padding-left: 8px;
+                padding-right: 8px;
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 6px;
+                    Text {
+                        text: "🔍";
+                        font-size: 12px;
+                        vertical-alignment: center;
+                    }
+                    search-input := LineEdit {
+                        placeholder-text: "Search company, role, notes, location... (Press Enter)";
+                        accepted => { root.search-changed(self.text); }
+                        edited => { root.search-changed(self.text); }
+                    }
+                }
+            }
+
+            // KPI Metric Cards
+            MetricCard {
+                title: "Total Tracked";
+                value: root.stats.total;
+                accent-color: Theme.blue;
+                width: 95px;
+            }
+            MetricCard {
+                title: "Applied";
+                value: root.stats.applied;
+                accent-color: Theme.teal;
+                width: 80px;
+            }
+            MetricCard {
+                title: "Interview";
+                value: root.stats.interview;
+                accent-color: Theme.mauve;
+                width: 85px;
+            }
+            MetricCard {
+                title: "Offers";
+                value: root.stats.offer + root.stats.hired;
+                accent-color: Theme.green;
+                width: 75px;
+            }
+            MetricCard {
+                title: "Top Score";
+                value: root.stats.top-score + " ★";
+                accent-color: Theme.peach;
+                width: 90px;
+            }
+
+            // Refresh, View Toggle & Add Company Controls
+            Rectangle {
+                background: Theme.mantle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 8px;
+                padding: 4px;
+
+                HorizontalLayout {
+                    spacing: 4px;
+
+                    // Add Company Button
+                    Rectangle {
+                        background: btn-add.has-hover ? Theme.accent-hover : Theme.accent;
+                        border-radius: 6px;
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        btn-add := TouchArea { clicked => { root.show-add-dialog = true; } }
+                        Text {
+                            text: "➕ Add";
+                            color: Theme.crust;
+                            font-size: 11px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        background: root.view-mode == "table" ? Theme.surface-selected : (btn-table.has-hover ? Theme.surface-hover : transparent);
+                        border-color: root.view-mode == "table" ? Theme.accent : transparent;
+                        border-width: 1px;
+                        border-radius: 6px;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        btn-table := TouchArea { clicked => { root.view-mode-changed("table"); } }
+                        Text {
+                            text: "⊞ Table";
+                            color: root.view-mode == "table" ? Theme.accent : Theme.text-secondary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        background: root.view-mode == "kanban" ? Theme.surface-selected : (btn-kanban.has-hover ? Theme.surface-hover : transparent);
+                        border-color: root.view-mode == "kanban" ? Theme.accent : transparent;
+                        border-width: 1px;
+                        border-radius: 6px;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        btn-kanban := TouchArea { clicked => { root.view-mode-changed("kanban"); } }
+                        Text {
+                            text: "▥ Kanban";
+                            color: root.view-mode == "kanban" ? Theme.accent : Theme.text-secondary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        background: root.view-mode == "pipeline" ? Theme.surface-selected : (btn-pipeline.has-hover ? Theme.surface-hover : transparent);
+                        border-color: root.view-mode == "pipeline" ? Theme.accent : transparent;
+                        border-width: 1px;
+                        border-radius: 6px;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        btn-pipeline := TouchArea { clicked => { root.view-mode-changed("pipeline"); } }
+                        Text {
+                            text: "⚡ Pipeline & Survey";
+                            color: root.view-mode == "pipeline" ? Theme.accent : Theme.text-secondary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        background: btn-ref.has-hover ? Theme.surface-hover : Theme.surface;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 6px;
+                        width: 32px;
+                        btn-ref := TouchArea { clicked => { root.refresh-data(); } }
+                        Text {
+                            text: "↻";
+                            color: Theme.text-primary;
+                            font-size: 14px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Secondary Bar: Filter Tabs (only in Tracker table/kanban view)
+        if root.view-mode != "pipeline": TabBar {
+            current-tab: root.current-tab;
+            tab-changed(tab) => { root.tab-changed(tab); }
+        }
+
+        // Main Area: Pipeline & Survey View
+        if root.view-mode == "pipeline": PipelineView {
+            jobs: root.pipeline-jobs;
+            selected-job-id: root.selected-pipeline-job-id;
+            selected-job: root.selected-pipeline-job;
+            has-selected-job: root.has-selected-pipeline-job;
+            questions: root.survey-questions;
+            status-message: root.survey-status-message;
+            inventory-skills-count: root.inventory-skills-count;
+            inventory-highlights-count: root.inventory-highlights-count;
+
+            select-job(id) => { root.select-pipeline-job(id); }
+            answer-changed(qid, text) => { root.survey-answer-changed(qid, text); }
+            open-job-url(url) => { root.open-url(url); }
+            save-survey(jid) => { root.save-survey(jid); }
+            merge-to-cv() => { root.merge-survey-to-cv(); }
+        }
+
+        // Main Area: Split Pane between (Table or Kanban) and Detail Drawer
+        if root.view-mode != "pipeline": HorizontalLayout {
+            spacing: 12px;
+
+            // Content Area (Table or Kanban)
+            Rectangle {
+                horizontal-stretch: 1;
+                clip: true;
+
+                if root.view-mode == "table": TableView {
+                    apps: root.apps;
+                    selected-id: root.selected-id;
+                    select-app(id) => { root.select-app(id); }
+                }
+
+                if root.view-mode == "kanban": KanbanView {
+                    col-evaluated: root.col-evaluated;
+                    col-applied: root.col-applied;
+                    col-interview: root.col-interview;
+                    col-offer: root.col-offer;
+                    col-rejected: root.col-rejected;
+                    selected-id: root.selected-id;
+                    select-app(id) => { root.select-app(id); }
+                }
+            }
+
+            // Right Inspector Drawer
+            DetailDrawer {
+                width: 340px;
+                app: root.selected-app;
+                has-selection: root.has-selection;
+                open-url(url) => { root.open-url(url); }
+                open-pdf(rep-num) => { root.open-pdf(rep-num); }
+                regenerate-pdf(rep-num) => { root.regenerate-pdf(rep-num); }
+                change-status(id, st) => { root.change-status(id, st); }
+            }
+        }
+    }
+
+    // Modal Add Company Overlay Dialog
+    if root.show-add-dialog: AddCompanyDialog {
+        cancel => { root.show-add-dialog = false; }
+        submit(co, ro, ur, st, loc, pay, not) => {
+            root.show-add-dialog = false;
+            root.add-company(co, ro, ur, st, loc, pay, not);
+        }
+    }
+}
