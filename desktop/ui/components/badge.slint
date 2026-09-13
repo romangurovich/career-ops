@@ -1,0 +1,75 @@
+import { Theme } from "../theme.slint";
+
+export component StatusBadge inherits Rectangle {
+    in property <string> status: "Applied";
+
+    pure function get-bg(st: string) -> color {
+        if (st == "Interview" || st == "Entrevista") {
+            return Theme.mauve.with-alpha(0.18);
+        } else if (st == "Offer" || st == "Oferta" || st == "Hired" || st == "Contratado") {
+            return Theme.green.with-alpha(0.18);
+        } else if (st == "Applied" || st == "Aplicada") {
+            return Theme.blue.with-alpha(0.18);
+        } else if (st == "Responded" || st == "Respondido") {
+            return Theme.teal.with-alpha(0.18);
+        } else if (st == "Rejected" || st == "Rechazada") {
+            return Theme.red.with-alpha(0.18);
+        } else if (st == "Discarded" || st == "Descartada" || st == "Skip") {
+            return Theme.gray.with-alpha(0.18);
+        }
+        return Theme.blue.with-alpha(0.14);
+    }
+
+    pure function get-fg(st: string) -> color {
+        if (st == "Interview" || st == "Entrevista") {
+            return Theme.mauve;
+        } else if (st == "Offer" || st == "Oferta" || st == "Hired" || st == "Contratado") {
+            return Theme.green;
+        } else if (st == "Applied" || st == "Aplicada") {
+            return Theme.blue;
+        } else if (st == "Responded" || st == "Respondido") {
+            return Theme.teal;
+        } else if (st == "Rejected" || st == "Rechazada") {
+            return Theme.red;
+        } else if (st == "Discarded" || st == "Descartada" || st == "Skip") {
+            return Theme.text-muted;
+        }
+        return Theme.blue;
+    }
+
+    pure function get-border(st: string) -> color {
+        if (st == "Interview" || st == "Entrevista") {
+            return Theme.mauve.with-alpha(0.4);
+        } else if (st == "Offer" || st == "Oferta" || st == "Hired" || st == "Contratado") {
+            return Theme.green.with-alpha(0.4);
+        } else if (st == "Applied" || st == "Aplicada") {
+            return Theme.blue.with-alpha(0.4);
+        } else if (st == "Responded" || st == "Respondido") {
+            return Theme.teal.with-alpha(0.4);
+        } else if (st == "Rejected" || st == "Rechazada") {
+            return Theme.red.with-alpha(0.4);
+        } else if (st == "Discarded" || st == "Descartada" || st == "Skip") {
+            return Theme.gray.with-alpha(0.4);
+        }
+        return Theme.blue.with-alpha(0.3);
+    }
+
+    background: get-bg(root.status);
+    border-color: get-border(root.status);
+    border-width: 1px;
+    border-radius: 6px;
+    height: 22px;
+    padding-left: 8px;
+    padding-right: 8px;
+
+    HorizontalLayout {
+        alignment: center;
+        Text {
+            text: root.status;
+            color: get-fg(root.status);
+            font-size: 11px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+}

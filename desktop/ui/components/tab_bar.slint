@@ -1,0 +1,91 @@
+import { Theme } from "../theme.slint";
+
+export component TabButton inherits Rectangle {
+    in property <string> text: "Tab";
+    in property <bool> active: false;
+    callback clicked();
+
+    background: root.active ? Theme.surface-selected : (touch.has-hover ? Theme.surface-hover : @radial-gradient(circle, transparent, transparent));
+    border-color: root.active ? Theme.accent : transparent;
+    border-width: 1px;
+    border-radius: 6px;
+    height: 28px;
+    padding-left: 10px;
+    padding-right: 10px;
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        Text {
+            text: root.text;
+            color: root.active ? Theme.accent : (touch.has-hover ? Theme.text-primary : Theme.text-secondary);
+            font-size: 12px;
+            font-weight: root.active ? 600 : 500;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component TabBar inherits Rectangle {
+    in property <string> current-tab: "all";
+    callback tab-changed(string);
+
+    background: Theme.mantle;
+    border-color: Theme.border;
+    border-width: 1px;
+    border-radius: 8px;
+    height: 38px;
+    padding-left: 4px;
+    padding-right: 4px;
+
+    HorizontalLayout {
+        alignment: start;
+        spacing: 4px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+
+        TabButton {
+            text: "All";
+            active: root.current-tab == "all";
+            clicked => { root.tab-changed("all"); }
+        }
+        TabButton {
+            text: "Evaluated";
+            active: root.current-tab == "evaluated";
+            clicked => { root.tab-changed("evaluated"); }
+        }
+        TabButton {
+            text: "Interview";
+            active: root.current-tab == "interview";
+            clicked => { root.tab-changed("interview"); }
+        }
+        TabButton {
+            text: "Responded";
+            active: root.current-tab == "responded";
+            clicked => { root.tab-changed("responded"); }
+        }
+        TabButton {
+            text: "Applied";
+            active: root.current-tab == "applied";
+            clicked => { root.tab-changed("applied"); }
+        }
+        TabButton {
+            text: "Top (★≥4.0)";
+            active: root.current-tab == "top";
+            clicked => { root.tab-changed("top"); }
+        }
+        TabButton {
+            text: "Skip / Discard";
+            active: root.current-tab == "discarded";
+            clicked => { root.tab-changed("discarded"); }
+        }
+        TabButton {
+            text: "Rejected";
+            active: root.current-tab == "rejected";
+            clicked => { root.tab-changed("rejected"); }
+        }
+    }
+}

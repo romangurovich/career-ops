@@ -1,0 +1,396 @@
+import { Theme } from "../theme.slint";
+import { PipelineJobItem, SurveyQuestionItem } from "../models.slint";
+import { ScrollView, LineEdit } from "std-widgets.slint";
+
+export component PipelineView inherits Rectangle {
+    in property <[PipelineJobItem]> jobs: [];
+    in property <int> selected-job-id: -1;
+    in property <PipelineJobItem> selected-job;
+    in property <bool> has-selected-job: false;
+    in property <[SurveyQuestionItem]> questions: [];
+    in property <string> status-message: "";
+    in property <int> inventory-skills-count: 0;
+    in property <int> inventory-highlights-count: 0;
+
+    callback select-job(int);
+    callback answer-changed(int, string);
+    callback open-job-url(string);
+    callback save-survey(int);
+    callback merge-to-cv();
+
+    background: Theme.background;
+
+    HorizontalLayout {
+        spacing: 12px;
+
+        // Left Column: Pipeline Jobs List
+        Rectangle {
+            width: 380px;
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 8px;
+            padding: 12px;
+
+            VerticalLayout {
+                spacing: 8px;
+
+                // Column Header
+                HorizontalLayout {
+                    alignment: space-between;
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "⚡ Pipeline Jobs";
+                            color: Theme.text-primary;
+                            font-size: 15px;
+                            font-weight: 700;
+                        }
+                        Text {
+                            text: "Scanned inbox ready for skill extraction";
+                            color: Theme.text-muted;
+                            font-size: 11px;
+                        }
+                    }
+
+                    Rectangle {
+                        background: Theme.mantle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 12px;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        height: 24px;
+                        HorizontalLayout {
+                            alignment: center;
+                            Text {
+                                text: root.jobs.length + " offers";
+                                color: Theme.blue;
+                                font-size: 11px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: Theme.border;
+                }
+
+                // Scrollable List of Jobs
+                ScrollView {
+                    VerticalLayout {
+                        spacing: 6px;
+                        padding-top: 4px;
+                        padding-bottom: 8px;
+
+                        for item in root.jobs: Rectangle {
+                            property <bool> is-selected: item.id == root.selected-job-id;
+                            background: is-selected ? Theme.surface-selected : (card-touch.has-hover ? Theme.surface-hover : Theme.mantle);
+                            border-color: is-selected ? Theme.accent : Theme.border;
+                            border-width: 1px;
+                            border-radius: 6px;
+                            padding: 8px;
+
+                            card-touch := TouchArea {
+                                clicked => { root.select-job(item.id); }
+                            }
+
+                            VerticalLayout {
+                                spacing: 3px;
+
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text {
+                                        text: item.company;
+                                        color: Theme.text-primary;
+                                        font-size: 13px;
+                                        font-weight: 700;
+                                        overflow: elide;
+                                    }
+
+                                    Rectangle {
+                                        background: item.status == "Processed" ? Theme.mauve.with-alpha(0.2) : Theme.teal.with-alpha(0.2);
+                                        border-color: item.status == "Processed" ? Theme.mauve : Theme.teal;
+                                        border-width: 1px;
+                                        border-radius: 4px;
+                                        padding-left: 6px;
+                                        padding-right: 6px;
+                                        height: 18px;
+
+                                        Text {
+                                            text: item.status;
+                                            color: item.status == "Processed" ? Theme.mauve : Theme.teal;
+                                            font-size: 9px;
+                                            font-weight: 700;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    text: item.role;
+                                    color: Theme.text-secondary;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                    overflow: elide;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    Text {
+                                        text: item.location != "" ? item.location : "Remote / Unspecified";
+                                        color: Theme.text-muted;
+                                        font-size: 10px;
+                                        overflow: elide;
+                                    }
+                                    if item.posted-on != "": Text {
+                                        text: "• " + item.posted-on;
+                                        color: Theme.text-muted;
+                                        font-size: 10px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Right Column: Survey & Master CV Generator
+        Rectangle {
+            horizontal-stretch: 1;
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 8px;
+            padding: 16px;
+
+            if !root.has-selected-job: VerticalLayout {
+                alignment: center;
+                spacing: 12px;
+                Text {
+                    text: "👈 Select a Job to Generate Survey";
+                    color: Theme.text-primary;
+                    font-size: 16px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: "Choose any job listing from the pipeline on the left.\nThe system will generate targeted technical questions to extract verified skills and STAR highlights for your master CV.";
+                    color: Theme.text-muted;
+                    font-size: 13px;
+                    horizontal-alignment: center;
+                }
+            }
+
+            if root.has-selected-job: VerticalLayout {
+                spacing: 12px;
+
+                // Job Details Banner
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: root.selected-job.company + " — " + root.selected-job.role;
+                            color: Theme.text-primary;
+                            font-size: 16px;
+                            font-weight: 800;
+                        }
+                        Text {
+                            text: (root.selected-job.location != "" ? root.selected-job.location : "Remote") + " • " + root.selected-job.url;
+                            color: Theme.text-secondary;
+                            font-size: 11px;
+                            overflow: elide;
+                        }
+                    }
+
+                    // Open URL Button
+                    Rectangle {
+                        background: btn-open-url.has-hover ? Theme.surface-hover : Theme.mantle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 6px;
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        height: 28px;
+                        btn-open-url := TouchArea {
+                            clicked => { root.open-job-url(root.selected-job.url); }
+                        }
+                        HorizontalLayout {
+                            spacing: 4px;
+                            alignment: center;
+                            Text {
+                                text: "🔗";
+                                font-size: 11px;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                text: "Open Listing";
+                                color: Theme.accent;
+                                font-size: 11px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // Sub-header with Inventory stats
+                Rectangle {
+                    background: Theme.mantle;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    border-radius: 6px;
+                    padding: 8px;
+                    padding-left: 12px;
+                    padding-right: 12px;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text {
+                            text: "🎯 Role Skills & STAR Project Highlights Survey";
+                            color: Theme.blue;
+                            font-size: 12px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "Master Inventory: " + root.inventory-skills-count + " verified skills • " + root.inventory-highlights-count + " STAR highlights";
+                            color: Theme.text-muted;
+                            font-size: 11px;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // Survey Questions in ScrollView
+                ScrollView {
+                    VerticalLayout {
+                        spacing: 10px;
+                        padding-right: 6px;
+
+                        for q in root.questions: Rectangle {
+                            background: Theme.mantle;
+                            border-color: Theme.border;
+                            border-width: 1px;
+                            border-radius: 6px;
+                            padding: 10px;
+
+                            VerticalLayout {
+                                spacing: 6px;
+
+                                HorizontalLayout {
+                                    Rectangle {
+                                        background: Theme.mauve.with-alpha(0.2);
+                                        border-color: Theme.mauve;
+                                        border-width: 1px;
+                                        border-radius: 4px;
+                                        padding-left: 6px;
+                                        padding-right: 6px;
+                                        height: 18px;
+
+                                        Text {
+                                            text: q.category;
+                                            color: Theme.mauve;
+                                            font-size: 9px;
+                                            font-weight: 800;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    text: q.prompt;
+                                    color: Theme.text-primary;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                    wrap: word-wrap;
+                                }
+
+                                LineEdit {
+                                    text: q.answer;
+                                    placeholder-text: q.placeholder;
+                                    edited => { root.answer-changed(q.id, self.text); }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Bottom Action Footer
+                Rectangle {
+                    background: Theme.mantle;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    border-radius: 6px;
+                    padding: 8px;
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    height: 48px;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+
+                        // Status message / toast
+                        Text {
+                            text: root.status-message;
+                            color: Theme.green;
+                            font-size: 11px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 8px;
+
+                            // Save to Inventory Button
+                            Rectangle {
+                                background: btn-save.has-hover ? Theme.teal.darker(15%) : Theme.teal;
+                                border-radius: 6px;
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                height: 32px;
+                                btn-save := TouchArea {
+                                    clicked => { root.save-survey(root.selected-job.id); }
+                                }
+                                Text {
+                                    text: "💾 Save to Inventory";
+                                    color: Theme.crust;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: center;
+                                }
+                            }
+
+                            // Merge into Master CV Button
+                            Rectangle {
+                                background: btn-merge.has-hover ? Theme.accent-hover : Theme.accent;
+                                border-radius: 6px;
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                height: 32px;
+                                btn-merge := TouchArea {
+                                    clicked => { root.merge-to-cv(); }
+                                }
+                                Text {
+                                    text: "✨ Merge into Master CV (cv.md)";
+                                    color: Theme.crust;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

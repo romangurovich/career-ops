@@ -1,0 +1,56 @@
+export struct AppItem {
+    id: int,
+    date: string,
+    company: string,
+    role: string,
+    status: string,
+    score: float,
+    score-str: string,
+    has-pdf: bool,
+    has-report: bool,
+    report-path: string,
+    report-number: string,
+    job-url: string,
+    notes: string,
+    location: string,
+    work-mode: string,
+    pay-range: string,
+    pay-max: float,
+    posted-on: string,
+    last-contact: string,
+    archetype: string,
+    tldr: string,
+}
+
+export struct MetricStats {
+    total: int,
+    evaluated: int,
+    applied: int,
+    interview: int,
+    responded: int,
+    offer: int,
+    hired: int,
+    discarded: int,
+    rejected: int,
+    avg-score: string,
+    top-score: string,
+}
+
+export struct PipelineJobItem {
+    id: int,
+    url: string,
+    company: string,
+    role: string,
+    location: string,
+    posted-on: string,
+    status: string,
+    is-pending: bool,
+}
+
+export struct SurveyQuestionItem {
+    id: int,
+    category: string,
+    prompt: string,
+    placeholder: string,
+    answer: string,
+}
